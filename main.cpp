@@ -181,9 +181,31 @@ void clearScreen(){
     }
 }
 
+void drawField(int field[10][10]){
+    for (int i = 0; i < 10; i++){
+        cout << "   ";
+        for (int j = 0; j < 10; j++){
+            if (field[i][j] == 0){
+                cout << '~';
+            }
+            else if (field[i][j] == 1){
+                cout << 'x';
+            }
+        }
+        cout << endl;
+    }
+}
 
 void drawMap(int user_field[10][10],int enemy_field[10][10],string msg){
     clearScreen();
-
-
+    drawField(enemy_field);
+    drawField(user_field);
+    string garbage;
+    for (int i = 0; i < 80; i++){
+        cout << "-";
+    }
+    cout << endl << "-";
+    cout << endl << "-" << msg;
+    cout << endl << "-";
+    cin >> garbage;
 }
