@@ -4,18 +4,11 @@
 #include <ctime>
 using namespace std;
 
-// Ships will be 2 3 3 4 5 long , 5 ship. 
-// Each field will be 10x10
-// Legend of map:
-//  1to5 ships
-//  0 no information
-//  -1 to -5 there is a wrecked ship
-//  9 nothing here
 void placeShips(int ship[][2],int field[10][10], int size);
 void drawMap(int user_field[10][10],int enemy_field[10][10],string message = "");
 char getAnswer(char answ_list[], int size);
 bool isDestroyed(int field[10][10]);
-void getMove(int coor[]); // Changes coor because we cant return arrays
+void getMove(int coor[2]); // Changes coor array because we cant return arrays
 int makeMove(int coor[],int field[10][10]);
 //MakeMove: if there is a ship at coor;
 //              see which ship is that, change the map accordingly, 
@@ -208,4 +201,53 @@ void drawMap(int user_field[10][10],int enemy_field[10][10],string msg){
     cout << endl << "-" << msg;
     cout << endl << "-";
     cin >> garbage;
+}
+
+char getAnswer(char ans_list[], int size){
+    char ans;
+    bool isValid = 0;
+    while (!isValid){
+        clearScreen();
+        cin >> ans;
+        for (int i = 0; i < size; i++){
+            if (ans_list[i] == ans){
+                isValid = 1;
+            }
+        }
+        if (isValid) {
+            return tolower(ans);
+        }
+    }
+    return 1;
+}
+
+bool isDestroyed(int field[10][10]){
+    bool destroyed = true;
+    for (int i = 0; i < 10; i++){
+        for (int j = 0; j < 10; j++){
+            if (field[i][j] == 1){
+                destroyed = false;
+            }
+        }
+    }
+    return destroyed;
+}
+
+void getMove(int coor[2]){
+    bool isValid = false;
+    int coor_x, coor_y;
+    do {
+        clearScreen();
+        cin >> coor_x >> coor_y;
+        if (coor_x > 10 or coor_x < 0 or coor_y > 10 or coor_y < 0){
+            isValid = false;
+        }
+        else {
+            isValid = true;
+        }
+    }while (isValid == false);
+
+    coor[0] = coor_x;
+    coor[1] = coor_y;
+
 }
