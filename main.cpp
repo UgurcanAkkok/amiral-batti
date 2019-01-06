@@ -14,8 +14,9 @@ struct Players {
     int airplane_carrier[5][2];
     // Map:
     // 0 -> No ship or unknown
-    // 1 -> There is a ship, either destroyed or known
+    // 1 -> There is a ship, either destroyed
     // 2 -> We attacked but there was no ship
+    // 3 -> There is our ship
     int field[10][10] = {0};
     int game_map[10][10] = {0};
 };
@@ -26,7 +27,7 @@ char getAnswer(char answ_list[], int size);
 bool isDestroyed(int field[10][10]);
 void getMove(int coor[2]); // Changes coor array because we cant return arrays
 //Returns which ship has been taken damage,  changes has_fallen accordingly
-string makeMove(int coor[],Players target, bool * has_fallen);
+string makeMove(int coor[],Players * target, bool * has_fallen);
 void compMove(int field[10][10], int coor[2]);
 // First selects a random coordinate which it didnt choose already, then 
 // calls makeMove() with that coor
@@ -34,9 +35,16 @@ void compMove(int field[10][10], int coor[2]);
 int main(){
     Players computer;
     Players user;
-    drawMap(computer.game_map,computer.game_map,"Welcome to Amiral Battı!, (p) to play, (q) to quit");
-    char answ_list[] = {'p','q'};
-    char answ = getAnswer(answ_list,2);
+    //drawMap(computer.game_map,computer.game_map,"Welcome to Amiral Battı!, (p) to play, (q) to quit");
+    //char answ_list[] = {'p','q'};
+    cout << "Welcome to Amiral Battı! Rules of the game:\n"
+        << "Press enter to skip messages,\n"
+        << "When entering the coordinates, enter in this order: ROW COLUMN\n" 
+        << "To win, you must destroy all enemy ships before it does.\n"
+        << "@ is your ship, x is destroyed ship, # is to indicate there is no ship, ~ is sea.\n"
+        << "Lengths of ships:\nMine:2\nFrigate:3\nSubmarine:3\nCruiser:4\nAirplane:5"
+        <<"\n(p) to play, (q) to quit." << endl;
+    char answ = getchar();//getAnswer(answ_list,2);
     if (answ == 'p'){
          
         //Initializing  ships' locations
@@ -52,14 +60,23 @@ int main(){
         placeShips(user.cruiser,user.field,4);
         placeShips(user.airplane_carrier,user.field,5);
 
+        for (int i = 0; i < 10; i++){
+            for (int j = 0; j < 10; j++){
+                if (user.field[i][j] == 1){
+                    user.game_map[i][j] = 3;
+                }
+            }
+        }
+
         bool game = true;
+        int turns = 0;
         while (game){
-            drawMap(user.field,computer.game_map,"Enter your move");
+            drawMap(user.game_map,computer.game_map,"Your turn..");
             int coor[2];
             getMove(coor);
 
             bool has_fallen;
-            string attacked_ship = makeMove(coor,computer,&has_fallen);
+            string attacked_ship = makeMove(coor,&computer,&has_fallen);
             string msg;
             if (has_fallen){
                 msg = attacked_ship + " has been destroyed!";
@@ -67,33 +84,45 @@ int main(){
             else {
                 msg = attacked_ship + " has taken damage.";
             }
-            drawMap(user.field,computer.field,msg);
-            drawMap(user.field,computer.game_map,"Computer's move..");
+            drawMap(user.game_map,computer.game_map,msg);
+            getchar();
+            getchar();
+
+            drawMap(user.game_map,computer.game_map,"Computer's move..");
+            getchar();
 
             compMove(user.game_map,coor);
-            attacked_ship = makeMove(coor,user,&has_fallen);
+            attacked_ship = makeMove(coor,&user,&has_fallen);
             if (has_fallen){
                 msg = "Your "+ attacked_ship + " has been destroyed!";
             }
             else {
-                msg = "Your " + attacked_ship + " has taken damage.";
+                msg = attacked_ship + " has taken damage.";
             }
+            drawMap(user.game_map,computer.game_map,msg);
+            getchar();
 
             if (isDestroyed(user.field)){
-                drawMap(user.field,computer.game_map,"You lost! What a shame.");
+                drawMap(user.game_map,computer.game_map,"You lost! What a shame.");
+                getchar();
                 game = false;
             }
             else if (isDestroyed(computer.field)){
-                drawMap(user.field,computer.game_map,"Wow, you won. Congrulations!!");
+                drawMap(user.game_map,computer.game_map,"Wow, you won. Congrulations!!");
+                cout << "And it only took " << turns << " turns!." << endl;
+                getchar();
                 game = false;
             }
             else {
                 continue;
             }
+
+            turns++;
         }
     }
     else {
         drawMap(computer.game_map,computer.game_map,"Quitting...");
+        getchar();
         return 0;
     }
 }
@@ -193,7 +222,7 @@ void clearScreen(){
 
 void drawField(int field[10][10]){
     for (int i = 0; i < 10; i++){
-        cout << "   ";
+        cout << "   " << i;
         for (int j = 0; j < 10; j++){
             // 0 means we dont know what is there
             if (field[i][j] == 0){
@@ -207,30 +236,36 @@ void drawField(int field[10][10]){
             else if (field[i][j] == 2){
                 cout << '#';
             }
+            else if (field[i][j] == 3){
+                cout << '@';
+            }
         }
         cout << endl;
     }
+    cout << "    ";
+    for (int i = 0; i < 10; i++){
+        cout << i;
+    }
+    cout << endl;
 }
 
 void drawMap(int user_field[10][10],int enemy_field[10][10],string msg){
     clearScreen();
     drawField(enemy_field);
+    cout << "\n\n\n\n";
     drawField(user_field);
-    string garbage;
     for (int i = 0; i < 80; i++){
         cout << "-";
     }
     cout << endl << "-";
     cout << endl << "-" << msg;
-    cout << endl << "-"<<"[Continue]";
-    cin >> garbage;
+    cout << endl << "-";
 }
 
 char getAnswer(char ans_list[], int size){
     char ans;
     bool isValid = 0;
     while (!isValid){
-        clearScreen();
         cin >> ans;
         for (int i = 0; i < size; i++){
             if (ans_list[i] == ans){
@@ -260,13 +295,13 @@ void getMove(int coor[2]){
     bool isValid = false;
     int coor_x, coor_y;
     do {
-        clearScreen();
+        cout << "Attack to: ";
         cin >> coor_x >> coor_y;
-        if (coor_x > 10 or coor_x < 0 or coor_y > 10 or coor_y < 0){
-            isValid = false;
+        if (coor_x < 10 and coor_x >= 0 and coor_y < 10 and coor_y >= 0){
+            isValid = true;
         }
         else {
-            isValid = true;
+            isValid = false;
         }
     }while (isValid == false);
 
@@ -292,28 +327,28 @@ bool attack(int ship[][2], int size, int x, int y, bool * has_fallen){
     return success;
 }
 
-string makeMove(int coor[], Players target,bool * has_fallen ){
+string makeMove(int coor[], Players * target,bool * has_fallen ){
     string damaged_ship;
     int x = coor[0];
     int y = coor[1];
 
     // If there is a ship at that coordinate
-    if (target.field[x][y] == 1){
-        target.field[x][y] = 0;
-        target.game_map[x][y] = 1;
-        if (attack(target.mine_ship, 2, x, y, has_fallen)){
+    if (target->field[x][y] == 1){
+        target->field[x][y] = 0;
+        target->game_map[x][y] = 1;
+        if (attack(target->mine_ship, 2, x, y, has_fallen)){
             damaged_ship = "Mine ship";
         }
-        if (attack(target.frigate, 3, x, y, has_fallen)){
+        if (attack(target->frigate, 3, x, y, has_fallen)){
             damaged_ship = "Frigate";
         }
-        if (attack(target.submarine, 3, x, y, has_fallen)){
+        if (attack(target->submarine, 3, x, y, has_fallen)){
             damaged_ship = "Submarine";
         }
-        if (attack(target.cruiser, 4, x, y, has_fallen)){
+        if (attack(target->cruiser, 4, x, y, has_fallen)){
             damaged_ship = "Cruiser";
         }
-        if (attack(target.airplane_carrier, 5, x, y, has_fallen)){
+        if (attack(target->airplane_carrier, 5, x, y, has_fallen)){
             damaged_ship = "Airplane carrier";
         }
         return damaged_ship;
@@ -321,7 +356,7 @@ string makeMove(int coor[], Players target,bool * has_fallen ){
     else {
         damaged_ship = "No ship";
         *has_fallen = false;
-        target.game_map[x][y] = 2;
+        target->game_map[x][y] = 2;
         return damaged_ship;
     }
 }
